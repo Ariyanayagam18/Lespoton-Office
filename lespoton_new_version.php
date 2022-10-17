@@ -3325,6 +3325,7 @@ echo json_encode($data);
 break;
 
 case 'winnerlist':
+
     $authuser = checkauth($dbconnection, $secureusertoken);
     if ($authuser == "0" || $authuser == "") {
         $data["status"] = 401;
@@ -3339,30 +3340,60 @@ case 'winnerlist':
     $eventId = $postdetails["event_id"];
     $birdtype = $postdetails["birdtype"];
     $resultType = $postdetails["resultType"];
+    // $raceresult = $postdetails["live_result"];
    
+   // resultType is 0 for live result summary 
+
     if($resultType == "0")
     {
-        $getEventDetails = mysqli_query($dbconnection, "select Events_id from ppa_events where Events_id='" . $eventId . "' limit 0,1"); 
-    }else{
+
+    $getEventDetails = mysqli_query($dbconnection, "select Events_id from ppa_events where Events_id='" . $eventId . "' limit 0,1"); 
+
+    // ariyanayagam  17-10-2022
+
+    $approve_liveresult = mysqli_query($dbconnection,"SELECT * FROM ppa_event_details  where event_id='" . $eventId . "'");
+    
+    $liveresult_approve = mysqli_fetch_array($approve_liveresult);
+
+    $liveresult_adminapproval =  $liveresult_approve['publish_status'];
+
+    // ariyanayagam  17-10-2022
+
+    // echo "live result ";die;
+
+    }
+    else{
+
+    // resultType is 1 for Approved result summary 
+
         $getEventDetails = mysqli_query($dbconnection, "select Events_id from ppa_events where Events_id='" . $eventId . "' and result_publish='".$resultType."' limit 0,1"); 
     }
 
-    
-        $checkEventDetails = mysqli_num_rows($getEventDetails);
-        
+
+
+    $checkEventDetails = mysqli_num_rows($getEventDetails);
+
         if ($checkEventDetails > 0) {
+
+            $approval_publish = ''; // ADD ariyanaygam 17-10-2022
+
             if($resultType == "0")
             {
                 
-               $getWinnerDetails = mysqli_query($dbconnection, "select a.*,b.latitude,b.longitude,b.profile_pic,c.date,c.start_time from ppa_files as a left join ppa_register as b on a.username = b.username left join ppa_event_details as c on a.event_id=c.event_id where a.event_id='" . $eventId . "' and a.club_code='" . $appType . "' and a.bird_type='".$birdtype."' group by a.ide order by a.velocity DESC");
+                $approval_publish = true;  // ADD ariyanaygam 17-10-2022
+
+                $getWinnerDetails = mysqli_query($dbconnection, "select a.*,b.latitude,b.longitude,b.profile_pic,c.date,c.start_time from ppa_files as a left join ppa_register as b on a.username = b.username left join ppa_event_details as c on a.event_id=c.event_id where a.event_id='" . $eventId . "' and a.club_code='" . $appType . "' and a.bird_type='".$birdtype."' group by a.ide order by a.velocity DESC");
             }else{
+                $approval_publish = false; // ADD ariyanaygam 17-10-2022
                $getWinnerDetails = mysqli_query($dbconnection, "select a.*,b.latitude,b.longitude,b.profile_pic,c.date,c.start_time from ppa_report as a left join ppa_register as b on a.name = b.username left join ppa_event_details as c on a.event_id=c.event_id where a.event_id='" . $eventId . "' and a.apptype='" . $appType . "' and a.bird_type_id='".$birdtype."' group by a.report_id order by a.velocity DESC"); 
             }
             
             $WinnerDetails = mysqli_num_rows($getWinnerDetails);
+
             $i = 0;
-            if ($WinnerDetails > 0) {
-                
+
+            if ($WinnerDetails > 0  &&  !$approval_publish ) {
+                // echo "test if ";
                 while ($WinnerList = mysqli_fetch_array($getWinnerDetails)) {
                     if(isset($WinnerList["ide"]))
                     {
@@ -3446,19 +3477,113 @@ case 'winnerlist':
                 $data["message"] = "Winner List successfully retrieved";
                 echo json_encode($data);
                 break;
-            } else {
+            }
+
+            // ADD ariyanaygam 17-10-2022
+            
+            else if ($WinnerDetails > 0  &&  ($approval_publish  && $liveresult_adminapproval))
+            {
+                // echo "test else if ";
+                while ($WinnerList = mysqli_fetch_array($getWinnerDetails)) {
+                    if(isset($WinnerList["ide"]))
+                    {
+                        $data["winner_list"][$i]["report_id"] = $WinnerList["ide"];
+                    }else{
+                        $data["winner_list"][$i]["report_id"] = $WinnerList["report_id"];
+                    }
+                    $data["winner_list"][$i]["event_start_date"] = $WinnerList["date"];
+                    $data["winner_list"][$i]["event_start_time"] = $WinnerList["start_time"];
+                    if(isset($WinnerList["time_interval"]))
+                    {   
+                        $WinnerList["time_interval"] = $WinnerList["time_interval"]/1000;
+                        $data["winner_list"][$i]["intervel_time"] = date("Y-m-d h:i:s A",$WinnerList["time_interval"]);
+                    }else{
+                        $WinnerList["intervel"] = $WinnerList["intervel"]/1000;
+                        $data["winner_list"][$i]["intervel_time"] = date("Y-m-d h:i:s A",$WinnerList["intervel"]);
+                    }
+                    if(isset($WinnerList["owner_ringno"]))
+                    {
+                        $data["winner_list"][$i]["ring_no"] = $WinnerList["owner_ringno"];
+                    }else{
+                        $data["winner_list"][$i]["ring_no"] = $WinnerList["ring_no"];
+                    }
+                    $data["winner_list"][$i]["bird_color"] = $WinnerList["bird_color"];
+                    $data["winner_list"][$i]["bird_gender"] = $WinnerList["bird_gender"];
+                    if(isset($WinnerList["club_code"]))
+                    {
+                        $data["winner_list"][$i]["apptype"] = $WinnerList["club_code"];
+                    }else{
+                        $data["winner_list"][$i]["apptype"] = $WinnerList["apptype"];
+                    }
+                    if(isset($WinnerList["mobile"]))
+                    {
+                        $data["winner_list"][$i]["mobile_number"] = $WinnerList["mobile"];
+                    }else{
+                        $data["winner_list"][$i]["mobile_number"] = $WinnerList["mobile_number"];
+                    }
+                    if(isset($WinnerList["username"]))
+                    {
+                        $data["winner_list"][$i]["name"] = $WinnerList["username"];
+                    }else{
+                        $data["winner_list"][$i]["name"] = $WinnerList["name"];
+                    }
+                    $data["winner_list"][$i]["device_id"] = $WinnerList["device_id"];
+                    $data["winner_list"][$i]["velocity"] = $WinnerList["velocity"];
+                    $data["winner_list"][$i]["distance"] = $WinnerList["distance"];
+                    if($WinnerList["profile_pic"] != "" || $WinnerList["profile_pic"] != null){
+                        $data["winner_list"][$i]["img_name"] = $SITEMAINURL . "uploads/" . $WinnerList["profile_pic"];
+                    }else{
+                        $data["winner_list"][$i]["img_name"] = $SITEMAINURL . "assets/images/profile_pic.jpg";
+                    }
+                    
+                    if($resultType == "0")
+                    {
+                       $data["winner_list"][$i]["img_name"] = $SITEMAINURL . "uploads/" . $WinnerList["filename"]; 
+                    }
+
+                    $data["winner_list"][$i]["latitude"] = $WinnerList["latitude"];
+                    $data["winner_list"][$i]["longtitude"] = $WinnerList["longitude"];
+                    $data["winner_list"][$i]["event_id"] = $WinnerList["event_id"];
+                    if(isset($WinnerList["temp_event_id"])){
+                        $data["winner_list"][$i]["event_details_id"] = $WinnerList["temp_event_id"];
+                    }else{
+                        $data["winner_list"][$i]["event_details_id"] = $WinnerList["event_details_id"];
+                    }
+                    if(isset($WinnerList["bird_type"])){
+                        $data["winner_list"][$i]["bird_type_id"] = $WinnerList["bird_type"];
+                    }else{
+                        $data["winner_list"][$i]["bird_type_id"] = $WinnerList["bird_type_id"];
+                    }
+                    if(isset($WinnerList["cre_date"])){
+                        $data["winner_list"][$i]["created_date"] = $WinnerList["cre_date"];
+                    }else{
+                        $data["winner_list"][$i]["created_date"] = $WinnerList["created_date"];
+                    }
+                    $i++;
+                }
+                
+                $data["club_count"] = $WinnerDetails;
+                $data["status"] = 200;
+                $data["message"] = "Winner List successfully retrieved";
+                echo json_encode($data);
+                break;
+            }
+            // ADD ariyanaygam 17-10-2022
+            else {
                 $data["status"] = 404;
                 $data["message"] = "Winner List not found";
                 echo json_encode($data);
                 break;
             }
-        } else {
+        } 
+        
+        else {
             $data["status"] = 404;
             $data["message"] = "Event Details Not Found";
             echo json_encode($data);
             break;
         }
-    break;
+        //   break;
 
 case 'pigeoninfo':
     $authuser = checkauth($dbconnection, $secureusertoken);

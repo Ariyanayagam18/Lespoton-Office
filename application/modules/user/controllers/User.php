@@ -2058,6 +2058,7 @@ $filepath = base_url();
     }
 
     public function changeresultstatus() {
+
         $status = $_POST["status"];
         $ide = $_POST["ide"];
         $query = $this->db->query("update ppa_events set result_publish='" . $status . "' where Events_id='" . $ide . "'");
@@ -3349,6 +3350,9 @@ $filepath = base_url();
         $groupby = " a.ide";
 
         $output_arr = SSP::simple($_GET, $sql_details, $table, $primaryKey, $columns, $Join_condition, $where, $groupby);
+
+        // echo "<pre>";print_r($output_arr);
+
         $rows = $_REQUEST["start"] + 1;
         $incc = 1;
         $racecatdropdown = '';
@@ -3361,6 +3365,7 @@ $filepath = base_url();
             if (strpos($haystack,$needle) !== false) {
             $output_arr['data'][$key][13] = "Not Available";
              */
+            // echo "<pre>";print_r($output_arr['data'][$key][0]);die;
 
             $id = $output_arr['data'][$key][count($output_arr['data'][$key]) - 1];
             $ide = $output_arr['data'][$key][0];
@@ -3600,8 +3605,11 @@ $filepath = base_url();
      
     public function liveResultsPublish()
     {
-       echo "<pre>";print_r($_POST);
-       
+
+    $approval_status = $_POST['admin_approve'];
+    $event_id = $_POST['event_id'];
+    $approve_result = $this->db->query("update ppa_event_details set publish_status='" .$approval_status. "' where event_id='" . $event_id . "'");
+    echo "admin approve : ".$approve_result; 
 
 
     }
@@ -3731,6 +3739,7 @@ $filepath = base_url();
         $groupby = " a.filename";
 
         $output_arr = SSP::simple($_GET, $sql_details, $table, $primaryKey, $columns, $Join_condition, $where, $groupby);
+
         $rows = $_REQUEST["start"] + 1;
         $incc = 1;
         $racecatdropdown = '';
@@ -5756,16 +5765,5 @@ $filepath = base_url();
         $this->load->view('include/footer');
 
     }
-
-    //  ariyanayagam 12-10-2022
-
-    public function  publishchange()
-	{
-	  $name = $_POST['name'];
-	  echo "<pre>";print_r($name);die;
-
-	}  
-
-    //  ariyanayagam 12-10-2022
 
 }

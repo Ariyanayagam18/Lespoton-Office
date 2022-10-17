@@ -5,10 +5,14 @@ $birdtype = $this->db->query("SELECT DISTINCT ppa_bird_type.b_id,ppa_bird_type.b
                       $eventide . "'");
 $birdinfo = $birdtype->result();
 
-
 $select_fancier = $this->db->query("select * from ppa_register where apptype='".$result_data[0]->Org_code."'");
 $select_fancierres = $select_fancier->result();
 
+$live_adminapproval = $this->db->query("select * from ppa_event_details where event_id='" . $eventide . "'");
+$live_adminapproval = $live_adminapproval->result();
+$publish_show = isset($live_adminapproval) ? $live_adminapproval[0]->publish_status : '';
+// echo "<pre>admin status :";print_r($live_adminapproval['publish_status']);
+// echo "<pre>admin status :";print_r($live_adminapproval[0]->publish_status);
 ?>
 
 <div class="content-wrapper">
@@ -52,9 +56,9 @@ $select_fancierres = $select_fancier->result();
 
                  <a style="cursor: pointer;" onclick="refreshtable();"><button type="button" class="btn-sm  btn btn-success" data-toggle="modal" style="font-size:14px;"> <i class="fa fa-refresh"></i>&nbsp;Refresh</button></a>
 
-                 <a href="#"><button type="button"  onclick="togglePublish()"   class="btn-sm  btn btn-success" data-toggle="modal" style="font-size:14px;" value=''>
+                 <a href="#"><button type="button"  onclick="togglePublish(<?php echo $eventide;?>)"   class="btn-sm  btn btn-success" data-toggle="modal" style="font-size:14px;" value=''>
                  <i class="fa fa-print"></i> <span id="togglePublish" >
-                  Publish </span> </button></a>
+                  <?php  echo $publish_show == 1 ? 'Un Publish' : 'Publish'; ?> </span> </button></a>
 
                  <a href="<?php echo base_url().'user/raceresults/'.$encrypt;?>"><button type="button" class="btn-sm  btn btn-success" data-toggle="modal" style="font-size:14px;"><i class="fa fa-eye"></i> View Results</button></a>
 
@@ -65,6 +69,9 @@ $select_fancierres = $select_fancier->result();
             </table>
             </div> 
           </div>
+          <?php
+          // echo "<pre>";print_r($result_data);
+          ?>
           <!-- /.box-header -->
 
             <div class="box-title">
@@ -673,23 +680,25 @@ function refreshtable()
 
 // Ariyanayagam 11-10-2022 - 12-10-2022
 
-function togglePublish()
+function togglePublish(event_id)
 {
-     
+     console.log('event_id : ',event_id)
      if($('#togglePublish')[0].innerText == 'Publish')
      {
-      liveResultsPublish(1)
+      liveResultsPublish(1,event_id)
+      // changeresultstatus(event_id,1)
       $('#togglePublish')[0].innerText = 'Un Publish';
      }
      else
      {
-      liveResultsPublish(0)
+      liveResultsPublish(0,event_id)
+      // changeresultstatus(event_id,0)
       $('#togglePublish')[0].innerText = 'Publish';
      }
 }
 
 
-function  liveResultsPublish(status)
+function  liveResultsPublish(status,event_id)
 {
   
    var url = '<?php echo base_url();?>';//$('.content-header').attr('rel');
@@ -698,7 +707,8 @@ function  liveResultsPublish(status)
         url: url+'user/liveResultsPublish',
         cache: false,
         data: {
-            admin_approve : status
+            admin_approve : status,
+            event_id : event_id
         },
         dataType: 'json',
         success: function(data) {
@@ -708,7 +718,27 @@ function  liveResultsPublish(status)
 
 }  
 
+function changeresultstatus(ide,st)
+{
+  
+    var url = '<?php echo base_url();?>';//$('.content-header').attr('rel');
+   $.ajax({
+    type: "post",
+    url: url+"user/changeresultstatus",
+    cache: false,   
+    data: {'ide':ide,'status':st},
+    success: function(json){  
+      console.log('response :'.json)
+      // document.getElementById('resultstatus').innerHTML = json;
+     //$('#example1').DataTable().ajax.reload( null, false );  
+     
+     }
+    
+    });
 
+ 
+  
+}  
 
 // Ariyanayagam 11-10-2022 - 12-10-2022
 
