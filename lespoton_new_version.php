@@ -834,7 +834,8 @@ case 'clublist':
         $data["club_count"] = $clubcount;
         $data["status"] = 200;
         $data["message"] = "Club List successfully retrieved";
-    } else {
+    } 
+    else {
         $data["status"] = 404;
         $data["message"] = "Club list not found";
     }
@@ -2537,12 +2538,17 @@ case 'racelist':
     }
     // $userToken = $postdetails["userToken"];
     $apptype = $postdetails["apptype"];
-    //echo "<pre>"; print_r($apptype); die;
-    // $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where B.Org_code='" . $apptype . "' ORDER BY Event_date DESC");
+    $year = $postdetails["year"]."%";
 
-    //echo "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where B.Org_code='" . $apptype . "' ORDER BY Event_date DESC"; die;
+    //  ariyanayagam 18-10-2022 for dropdown filter
 
-    $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
+    $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where A.Event_date like '".$year."' and B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
+     
+    //  ariyanayagam 18-10-2022  for dropdown filter
+
+    // $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where  B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
+
+    // echo "<pre>";print_r(mysqli_fetch_array($query));die;
 
     $racecount = mysqli_num_rows($query);
     if ($racecount > 0) {
@@ -3323,6 +3329,55 @@ case 'photoApprove':
     }
 echo json_encode($data);
 break;
+
+// Ariyanayagam 18-10-2022
+
+case 'getyear':
+    
+    $authuser = checkauth($dbconnection, $secureusertoken);
+    if ($authuser == "0" || $authuser == "") {
+        $data["status"] = 401;
+        $data["message"] = "Authentication failed";
+        echo json_encode($data);
+        break;
+    }
+
+    $year = $postdetails["years"];
+
+    if($year == 'all')
+    {
+        $i = 0;
+        $Years_record  = mysqli_query($dbconnection,"select year(Created_date) as year from ppa_events group by year(Created_date)");
+        // echo "<pre> LIST ";print_r($Years_record);exit;
+        $no_ofyears = mysqli_num_rows($Years_record);
+        // while($row = $Years_record->fetch_assoc()) {
+        if($no_ofyears > 0)
+        {
+        while($row = mysqli_fetch_array($Years_record)) {
+            $data['year'][$i] = $row["year"];
+            $i++;
+        }
+        $data["status"] = 200;
+        $data["message"] = "Years successfully retrived";
+        echo json_encode($data);
+        break;
+       }
+        else{
+            $data["status"] = 404;
+            $data["message"] = 'No Data found!';
+            echo json_encode($data);
+            break;
+        }
+        
+    }
+    else{
+        $data["status"] = 404;
+        $data["message"] = 'No Record found!';
+        echo json_encode($data);
+        break;
+    }
+
+// Ariyanayagam 18-10-2022
 
 case 'winnerlist':
 
@@ -4990,7 +5045,6 @@ case 'ppa_bluetooth':
         }     
     echo json_encode($data);
     break;
-
 
 case 'liberationupdate':
     $authuser = checkauth($dbconnection, $secureusertoken);
