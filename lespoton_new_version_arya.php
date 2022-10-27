@@ -603,6 +603,46 @@ case 'forgotpassword':
         break;
     }
 
+    // new api for forgotpassword arya 21-10-2022
+
+    case 'forgotpassword_mobile':
+        $mobile = $postdetails["mobile"];
+        $str = rand();
+        $check_mobile = mysqli_query($dbconnection, "select phone_no from ppa_register where phone_no='" . $mobile . "'");
+        if (mysqli_num_rows($check_mobile) > 0) {
+         $data['user_exist'] = 1;
+         $data["status"] = 200;
+         $data["message"] = "User Found";
+         echo json_encode($data);
+         break;
+        } else {
+            $data["status"] = 404;
+            $data["message"] = "User Not Found";
+            echo json_encode($data);
+            break;
+        }
+
+        case 'updatepasssword':
+            $mobile = $postdetails["mobile"];
+             $is_user = $postdetails["user_exist"];
+             $password = $postdetails['password'];
+            $hashPassword = password_hash($password, PASSWORD_DEFAULT);
+            if ($is_user == 1) {
+                $updatePassword =  mysqli_query($dbconnection, " update ppa_register set password ='".$hashPassword."'  where phone_no='" . $mobile . "'");
+                echo "status : ".$updatePassword;
+                $data["status"] = 200;
+                $data["message"] = "Password updated Succesfully!!";
+                echo json_encode($data);
+                break;
+            } else {
+                $data["status"] = 400;
+                $data["message"] = "Something went wrong!!!!";
+                echo json_encode($data);
+                break;
+            }
+    
+// new api for forgotpassword arya 21-10-2022
+
 case 'pparegister': // Register and Login service
     $deviceide = $postdetails["deivce_id"];
     $username = $postdetails["username"];

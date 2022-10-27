@@ -834,8 +834,7 @@ case 'clublist':
         $data["club_count"] = $clubcount;
         $data["status"] = 200;
         $data["message"] = "Club List successfully retrieved";
-    } 
-    else {
+    } else {
         $data["status"] = 404;
         $data["message"] = "Club list not found";
     }
@@ -3330,6 +3329,7 @@ case 'photoApprove':
 echo json_encode($data);
 break;
 
+
 // Ariyanayagam 18-10-2022
 
 case 'getyear':
@@ -5045,6 +5045,7 @@ case 'ppa_bluetooth':
         }     
     echo json_encode($data);
     break;
+
 
 case 'liberationupdate':
     $authuser = checkauth($dbconnection, $secureusertoken);
