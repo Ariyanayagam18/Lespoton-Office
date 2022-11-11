@@ -561,47 +561,88 @@ case 'racecalculation':
     echo json_encode($data);
     break;
 
+// case 'forgotpassword':
+//     $email_id = $postdetails["email"];
+//     $str = rand();
+//     $check_email = mysqli_query($dbconnection, "select email_id from ppa_register where email_id='" . $email_id . "'");
+//     if (mysqli_num_rows($check_email) > 0) {
+//         $mail = new PHPMailer();
+//         $mail->IsSMTP();
+//         $mail->SMTPDebug = 0;
+//         $mail->SMTPAuth = TRUE;
+//         $mail->Username = "abdur@twilightsoftwares.com";
+//         $mail->Password = "Firstpassword@9";
+//         $mail->SMTPSecure = "tls";
+//         $mail->Port = 587;
+//         $mail->Host = "smtp.gmail.com";
+//         $mail->From = 'abdur@twilightsoftwares.com';
+//         $mail->FromName = 'David Billa';
+//         $mail->addAddress($email_id);
+//         $mail->IsHTML(true);
+//         $mail->Subject = 'Forgot Password From LespotOn';
+//         $mail->Body    = "https://pigeonsportsclock.com/pigeon/forgotpassword.php?verify_id=" . $str . "";
+//         $mail->Mailer = "smtp";
+
+//         if (!$mail->Send()) {
+//             $data["status"] = 404;
+//             $data["message"] = "Mail Not Send";
+//             echo json_encode($data);
+//             break;
+//         } else {
+//             $updatetoken = mysqli_query($dbconnection, "update ppa_register set verify_id='" . $str . "' where email_id='" . $email_id . "'");
+//             $data["status"] = 200;
+//             $data["message"] = "Mail Send successfully";
+//             echo json_encode($data);
+//             break;
+//         }
+
+//     } else {
+//         $data["status"] = 404;
+//         $data["message"] = "User Not Found";
+//         echo json_encode($data);
+//         break;
+//     }
+
+// new api for forgotpassword arya 21-10-2022
+
 case 'forgotpassword':
-    $email_id = $postdetails["email"];
+    $mobile = $postdetails["mobile"];
     $str = rand();
-    $check_email = mysqli_query($dbconnection, "select email_id from ppa_register where email_id='" . $email_id . "'");
-    if (mysqli_num_rows($check_email) > 0) {
-        $mail = new PHPMailer();
-        $mail->IsSMTP();
-        $mail->SMTPDebug = 0;
-        $mail->SMTPAuth = TRUE;
-        $mail->Username = "abdur@twilightsoftwares.com";
-        $mail->Password = "Firstpassword@9";
-        $mail->SMTPSecure = "tls";
-        $mail->Port = 587;
-        $mail->Host = "smtp.gmail.com";
-        $mail->From = 'abdur@twilightsoftwares.com';
-        $mail->FromName = 'David Billa';
-        $mail->addAddress($email_id);
-        $mail->IsHTML(true);
-        $mail->Subject = 'Forgot Password From LespotOn';
-        $mail->Body    = "https://pigeonsportsclock.com/pigeon/forgotpassword.php?verify_id=" . $str . "";
-        $mail->Mailer = "smtp";
-
-        if (!$mail->Send()) {
-            $data["status"] = 404;
-            $data["message"] = "Mail Not Send";
-            echo json_encode($data);
-            break;
-        } else {
-            $updatetoken = mysqli_query($dbconnection, "update ppa_register set verify_id='" . $str . "' where email_id='" . $email_id . "'");
-            $data["status"] = 200;
-            $data["message"] = "Mail Send successfully";
-            echo json_encode($data);
-            break;
-        }
-
+    $check_mobile = mysqli_query($dbconnection, "select phone_no from ppa_register where phone_no='" . $mobile . "'");
+    if (mysqli_num_rows($check_mobile) > 0) {
+     $data['user_exist'] = 1;
+     $data["status"] = 200;
+     $data["message"] = "User Found";
+     echo json_encode($data);
+     break;
     } else {
         $data["status"] = 404;
         $data["message"] = "User Not Found";
         echo json_encode($data);
         break;
     }
+
+    case 'updatepasssword':
+        $mobile = $postdetails["mobile"];
+         $is_user = $postdetails["user_exist"];
+         $password = $postdetails['password'];
+        $hashPassword = password_hash($password, PASSWORD_DEFAULT);
+        if ($is_user == 1) {
+            $updatePassword =  mysqli_query($dbconnection, " update ppa_register set password ='".$hashPassword."'  where phone_no='" . $mobile . "'");
+            $data['update'] = 1;
+            $data["status"] = 200;
+            $data["message"] = "Password updated Succesfully!!";
+            echo json_encode($data);
+            break;
+        } else {
+            $data["status"] = 400;
+            $data["message"] = "Something went wrong!!!!";
+            echo json_encode($data);
+            break;
+        }
+
+
+// new api for forgotpassword arya 21-10-2022
 
 case 'pparegister': // Register and Login service
     $deviceide = $postdetails["deivce_id"];
@@ -845,8 +886,9 @@ case 'ppalogin':
     $username = $postdetails["user_name"];
     $password = $postdetails["password"];
     $apptype = $postdetails["apptype"];
+
     if ($apptype != "" && $username != "") {
-        $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')  and apptype='" . $apptype . "'");
+        $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')  and  apptype='" .$apptype ."" );
         $numRows = mysqli_num_rows($checklogin);
     } else {
         $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')");
@@ -2540,15 +2582,15 @@ case 'racelist':
     $year = $postdetails["year"]."%";
 
     //  ariyanayagam 18-10-2022 for dropdown filter
-
-    $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where A.Event_date like '".$year."' and B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
-     
-    //  ariyanayagam 18-10-2022  for dropdown filter
-
-    // $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where  B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
-
-    // echo "<pre>";print_r(mysqli_fetch_array($query));die;
-
+   
+    if(isset($postdetails["year"]))
+    {
+        $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where A.Event_date like '".$year."' and B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
+    }
+    else{
+        $query = mysqli_query($dbconnection, "SELECT * FROM ppa_events AS A LEFT JOIN users AS B ON A.Org_id=B.users_id LEFT JOIN ppa_event_details AS C ON A.Events_id=C.event_id INNER JOIN ppa_bird_type AS D ON C.bird_id=D.b_id where  B.Org_code='" . $apptype . "' GROUP BY Events_id DESC");
+    }
+    
     $racecount = mysqli_num_rows($query);
     if ($racecount > 0) {
         $i = 0;
@@ -3330,7 +3372,7 @@ echo json_encode($data);
 break;
 
 
-// Ariyanayagam 18-10-2022
+// Ariyanayagam 18-10-2022 years Api 
 
 case 'getyear':
     
@@ -3377,7 +3419,7 @@ case 'getyear':
         break;
     }
 
-// Ariyanayagam 18-10-2022
+// Ariyanayagam 18-10-2022 years Api 
 
 case 'winnerlist':
 
@@ -5163,6 +5205,27 @@ case 'liberationupdate':
     }
     echo json_encode($data);
     break;
+
+    // arya deleteuser action 11-11-2022
+
+    case 'deleteuser':
+        $authuser = checkauth($dbconnection, $secureusertoken);
+        if ($authuser == "0" || $authuser == "") {
+            $data["status"] = 401;
+            $data["message"] = "Authentication failed";
+            echo json_encode($data);
+            break;
+        }
+        $user_id = $postdetails["userid"];
+        $status =  mysqli_query($dbconnection, "delete from  ppa_register  where reg_id='".$user_id."'");
+        $data["status"] = 401;
+        $data["message"] = "User Deleted Successfully";
+        echo json_encode($data);
+        break;
+
+    // arya deleteuser action 11-11-2022
+
+
 default:
     header("HTTP/1.1 200 OK");
     die;

@@ -887,7 +887,7 @@ case 'ppalogin':
     $password = $postdetails["password"];
     $apptype = $postdetails["apptype"];
     if ($apptype != "" && $username != "") {
-        $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')  and apptype='" . $apptype . "'");
+        $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')  and apptype='" . $apptype . "'" );
         $numRows = mysqli_num_rows($checklogin);
     } else {
         $checklogin = mysqli_query($dbconnection, "select * from ppa_register where ( username='" . $username . "' OR phone_no='" . $username . "')");
@@ -2738,14 +2738,6 @@ case 'viewbasketinfo':
         $data["status"] = 404;
         $data["message"] = "Basketing not found for the given event";
     }
-
-    // $fancierinfo = mysqli_query($dbconnection, "select * from ppa_register where apptype='" . $apptype . "'");
-    // $i = 0;
-    // while ($fancierlist = mysqli_fetch_array($fancierinfo)) {
-    //     $data["fancierinfo"][$i]["useride"] = $fancierlist["reg_id"];
-    //     $data["fancierinfo"][$i]["username"] = $fancierlist["username"];
-    //     $i++;
-    // }
     echo json_encode($data);
     break;
 
@@ -5202,6 +5194,22 @@ case 'liberationupdate':
     }
     echo json_encode($data);
     break;
+
+    case 'deleteuser':
+    $authuser = checkauth($dbconnection, $secureusertoken);
+    if ($authuser == "0" || $authuser == "") {
+        $data["status"] = 401;
+        $data["message"] = "Authentication failed";
+        echo json_encode($data);
+        break;
+    }
+    $user_id = $postdetails["userid"];
+    $status =  mysqli_query($dbconnection, "delete from  ppa_register  where reg_id='".$user_id."'");
+    $data["status"] = 401;
+    $data["message"] = "User Deleted Successfully";
+    echo json_encode($data);
+    break;
+
 default:
     header("HTTP/1.1 200 OK");
     die;
@@ -5441,7 +5449,6 @@ function entrylog($action="",$desc="",$userId='',$dbconnection)
   $get_user_id = $userId;
   $get_entry_date = date("Y-m-d H:i:s");
   $type = 'APP';
-
   $insert_qry = "insert system_logs set ip='" . $ipaddress . "',action='" . $getAction . "',description='" . $getdescription . "',user_id='" . $get_user_id . "',entry_date='" . $get_entry_date . "', type='".$type."'";
   mysqli_query($dbconnection, $insert_qry);
 }
