@@ -5217,9 +5217,16 @@ case 'liberationupdate':
             break;
         }
         $user_id = $postdetails["userid"];
-        $status =  mysqli_query($dbconnection, "delete from  ppa_register  where reg_id='".$user_id."'");
-        $data["status"] = 401;
-        $data["message"] = "User Deleted Successfully";
+        if($user_id != null && $user_id != '')
+        {
+            $status =  mysqli_query($dbconnection, "delete from  ppa_register  where reg_id='".$user_id."'");
+            $data["status"] = 401;
+            $data["message"] = "User Deleted Successfully";
+            echo json_encode($data);
+            break;
+        }
+        $data["status"] = 400;
+        $data["message"] = "userid must have a value!";
         echo json_encode($data);
         break;
 
